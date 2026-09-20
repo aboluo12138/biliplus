@@ -477,6 +477,34 @@ test('兼容层在 Chrome 环境下完全不改动 chrome.*', () => {
   assert.equal(context.__biliplusExtApiCompat, undefined);
 });
 
+test('火狐发布工作流保持 ff-v* 触发与关键步骤', () => {
+  const workflowPath = path.join(ROOT, '.github', 'workflows', 'firefox-release.yml');
+  assert.equal(fs.existsSync(workflowPath), true, '缺少火狐发布工作流');
+  const workflow = fs.readFileSync(workflowPath, 'utf8');
+
+  // 只在自己的 ff-v* 标签上触发：上游 release-please 用的是 v*，同名标签会冲突；
+  // 同时与 release.yml（Chrome 发布）保持分离。
+  assert.match(workflow, /tags:\s*\n\s*-\s*'ff-v\*'/, '触发器应为 ff-v* 标签');
+  assert.match(workflow, /workflow_dispatch:/, '应支持手动触发');
+  assert.match(workflow, /contents:\s*write/, '需要 contents: write 才能创建 Release');
+
+  // 关键步骤：先跑移植测试，再打包，最后上传产物
+  assert.match(workflow, /node tests\/firefox-port\.test\.js/);
+  assert.match(workflow, /node tools\/build-firefox\.cjs/);
+  assert.match(workflow, /gh release upload/);
+  assert.match(workflow, /dist\/\*\.xpi/);
+  assert.match(workflow, /dist\/\*\.zip/);
+
+  // 签名必须有条件：没配 AMO 密钥的仓库不能因此失败
+  assert.match(
+    workflow,
+    /if:\s*\$\{\{\s*env\.AMO_JWT_ISSUER/,
+    'AMO 签名步骤应以密钥是否配置为条件'
+  );
+  // 上传 Release 用的是内置 token，不需要额外 secrets
+  assert.match(workflow, /github\.token/);
+});
+
 test('兼容层覆盖源码中用到的全部 chrome.* 命名空间', () => {
   const env = createFirefoxEnv();
   const context = runCompat(env);

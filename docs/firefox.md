@@ -51,6 +51,30 @@ npx web-ext sign --source-dir dist/firefox --channel unlisted \
 > 提交 AMO 时可能还需要按 AMO 的最新要求声明数据收集用途（`data_collection_permissions`）。
 > 这一点和 Chrome 上架流程类似，按 AMO 后台提示填写即可。
 
+### 用 GitHub Actions 自动打包（可选）
+
+仓库里带了 `.github/workflows/firefox-release.yml`，**只在自己的 `ff-v*` 标签上触发**——
+刻意不用 `v*`，避免和上游 release-please 的标签撞名，也和 `release.yml`（Chrome 发布）完全分开。
+
+流程：校验标签与 `manifest.json` 版本一致 → 跑移植测试 → 构建 → 上传
+`dist/*.xpi`、`dist/*.zip` 到对应的 GitHub Release。
+
+```sh
+# 例如当前是 1.2.0
+git tag ff-v1.2.0
+git push origin ff-v1.2.0
+```
+
+也可以在仓库的 Actions 页面手动触发（`workflow_dispatch`），填标签名即可。
+
+**顺带签名**：如果在仓库 Secrets 里配置了 `AMO_JWT_ISSUER` 和 `AMO_JWT_SECRET`
+（AMO 后台生成），工作流会额外用 `web-ext sign --channel unlisted` 签出一个可永久安装的
+xpi 并一并上传；没配置这两个密钥就跳过签名，只上传未签名包。
+
+> 注意：fork 里默认不启用 Actions。如果你在 fork 里打开了 Actions，
+> 上游自带的 `release.yml` 会在 push 到 main 时运行（建 Release PR / 发 Chrome 应用商店），
+> 那需要上游的密钥，通常只会失败报错——不想看到的话就别启用它。
+
 ## 跟进上游更新（原作者发新版后）
 
 移植层分两类，跟进成本完全不同：

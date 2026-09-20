@@ -6,6 +6,7 @@
     <meta name="color-scheme" content="light" />
     <title>BiliPlus 设置</title>
     <link rel="stylesheet" href="./css/settings.css" />
+    <script src="../scripts/common/ext-api-compat.js" defer></script>
     <script src="./js/settings.js" defer></script>
   </head>
   <body class="options-page" aria-busy="true" data-master-enabled="false">
@@ -62,6 +63,14 @@
 
         <div class="pause-notice" id="pause-notice" role="status" hidden>
           总开关已关闭。配置仍会保留；刷新已打开的 B 站页面后，全部增强停止运行。
+        </div>
+
+        <div class="site-access" id="site-access" role="status" hidden>
+          <span>
+            火狐不会在安装时自动授予站点权限。未授权时增强脚本不会注入 B 站页面，
+            看起来就像完全没有生效。
+          </span>
+          <button type="button" id="site-access-grant">允许访问 B 站</button>
         </div>
 
         <section class="setting-section" id="home" aria-labelledby="home-title">

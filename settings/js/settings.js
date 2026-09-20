@@ -78,6 +78,58 @@ async function removeArchiveAccess() {
   return chrome.permissions.remove(archivePermissionRequest());
 }
 
+const SITE_ACCESS_ORIGINS = Object.freeze(['*://*.bilibili.com/*']);
+
+/**
+ * 火狐的 MV3 扩展默认不授予主机权限（origin controls），未授权时内容脚本
+ * 根本不会注入，表现就是"装了但完全没反应"。这里在设置页提供一键授权入口，
+ * 让用户不必去 about:addons 里翻开关。Chrome 安装即授权，因此不显示。
+ */
+function isGeckoExtension() {
+  return (
+    typeof browser !== 'undefined' &&
+    typeof browser?.runtime?.getBrowserInfo === 'function'
+  );
+}
+
+function siteAccessRequest() {
+  return { origins: [...SITE_ACCESS_ORIGINS] };
+}
+
+function updateSiteAccessNotice(granted) {
+  const notice = document.getElementById('site-access');
+  if (notice) notice.hidden = Boolean(granted);
+}
+
+async function refreshSiteAccess() {
+  const notice = document.getElementById('site-access');
+  if (!notice || !isGeckoExtension()) return;
+  try {
+    updateSiteAccessNotice(await chrome.permissions.contains(siteAccessRequest()));
+  } catch (error) {
+    console.error('读取站点访问权限失败', error);
+  }
+}
+
+function bindSiteAccess() {
+  const button = document.getElementById('site-access-grant');
+  if (!button) return;
+  button.addEventListener('click', async () => {
+    try {
+      const granted = await chrome.permissions.request(siteAccessRequest());
+      const available = granted || (await chrome.permissions.contains(siteAccessRequest()));
+      updateSiteAccessNotice(available);
+      setSaveState(
+        available ? '已授权，刷新 B 站页面后生效' : '未授权，增强脚本不会运行',
+        available ? 'saved' : 'error'
+      );
+    } catch (error) {
+      console.error('请求站点访问权限失败', error);
+      setSaveState('授权失败，请在 about:addons 中手动允许', 'error');
+    }
+  });
+}
+
 async function flushSettingSave(element, state) {
   const key = element.dataset.setting;
   const settingRow = element.closest('.setting-row, .master-switch');
@@ -224,7 +276,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const version = document.getElementById('extension-version');
   if (version) version.textContent = chrome.runtime.getManifest().version;
   bindNavigation();
+  bindSiteAccess();
   setSettingsBusy(true);
+  void refreshSiteAccess();
   try {
     const restoreNotice = await restoreSettings();
     bindSettings();

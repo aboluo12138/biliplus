@@ -501,7 +501,7 @@ chrome.storage.sync.get(['biliplus-enable', 'invalid-video-info'], storage => {
     if (!box || box.tagName === 'IMG') {
       return;
     }
-    if (getComputedStyle(box).position === 'static') {
+    if (window.getComputedStyle(box).position === 'static') {
       box.style.position = 'relative';
     }
     if (box.querySelector(':scope > .biliplus-invalid-mask')) {
@@ -530,7 +530,7 @@ chrome.storage.sync.get(['biliplus-enable', 'invalid-video-info'], storage => {
       img.classList.add('biliplus-invalid-restored-cover');
     }
     if (box && box.tagName !== 'IMG') {
-      if (getComputedStyle(box).position === 'static') {
+      if (window.getComputedStyle(box).position === 'static') {
         box.style.position = 'relative';
       }
       if (box.clientHeight === 0) {

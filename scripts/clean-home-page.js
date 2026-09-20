@@ -117,8 +117,11 @@
       if (expansionPulsePending) return;
       expansionPulsePending = true;
       anchor.classList.remove('biliplus-load-more-anchor');
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
+      // 通过 window 调用而不是裸调用 requestAnimationFrame：
+      // 火狐会对 receiver 做 WebIDL 校验，裸调用会抛
+      // "called on an object that does not implement interface Window"。
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
           expansionPulsePending = false;
           enterViewport();
         });

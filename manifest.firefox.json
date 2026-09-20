@@ -1,0 +1,141 @@
+{
+  "manifest_version": 3,
+  "name": "BiliPlus - Bilibili 加大杯，细节从大杯做起",
+  "description": "专门为细节控的人群使用，只要在B站上设计不合理的地方，都可以加入到大杯中。",
+  "version": "1.2.0",
+  "author": "timothy-lau@outlook.com",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "biliplus@0xlau.dev",
+      "strict_min_version": "128.0"
+    }
+  },
+  "icons": {
+    "16": "img/icon-16.png",
+    "32": "img/icon-32.png",
+    "48": "img/icon-48.png",
+    "96": "img/icon-96.png",
+    "128": "logo.png"
+  },
+  "content_scripts": [
+    {
+      "js": [
+        "scripts/common/ext-api-compat.js",
+        "scripts/information-cocoon-status.js"
+      ],
+      "matches": [
+        "https://*.bilibili.com/*"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "js": [
+        "scripts/common/ext-api-compat.js",
+        "scripts/common/md5.min.js",
+        "scripts/common/utils.js",
+        "scripts/common/bilibili-api.js"
+      ],
+      "matches": [
+        "https://*.bilibili.com/*"
+      ]
+    },
+    {
+      "js": [
+        "scripts/common/ext-api-compat.js",
+        "scripts/feed-roll-history-btn.js",
+        "scripts/clean-home-page.js"
+      ],
+      "matches": [
+        "https://www.bilibili.com/*"
+      ],
+      "css": [
+        "css/global.css",
+        "css/feed-roll-history-btn.css",
+        "css/clean-home-page.css"
+      ]
+    },
+    {
+      "js": [
+        "scripts/common/ext-api-compat.js",
+        "scripts/global-patches.js",
+        "scripts/cover-viewer.js",
+        "scripts/ai-conclusion.js",
+        "scripts/hide-hot-search-list.js",
+        "scripts/home-content-filter.js",
+        "scripts/auto-subtitle.js"
+      ],
+      "matches": [
+        "https://*.bilibili.com/*"
+      ],
+      "css": [
+        "css/global.css",
+        "css/ai-conclusion.css",
+        "css/home-content-filter.css"
+      ]
+    },
+    {
+      "js": [
+        "scripts/common/ext-api-compat.js",
+        "scripts/hide-user-comment.js",
+        "scripts/stepless-video-rate.js"
+      ],
+      "matches": [
+        "https://www.bilibili.com/video/*",
+        "https://www.bilibili.com/list/*",
+        "https://www.bilibili.com/bangumi/play/*"
+      ],
+      "css": [
+        "css/global.css",
+        "css/stepless-video-rate-btn.css"
+      ]
+    },
+    {
+      "js": [
+        "scripts/common/ext-api-compat.js",
+        "scripts/invalid-video-info.js"
+      ],
+      "matches": [
+        "https://www.bilibili.com/video/*",
+        "https://www.bilibili.com/list/ml*",
+        "https://space.bilibili.com/*"
+      ],
+      "css": [
+        "css/invalid-video-info.css"
+      ]
+    }
+  ],
+  "background": {
+    "scripts": [
+      "scripts/common/ext-api-compat.js",
+      "scripts/background/information-cocoon.js",
+      "scripts/background/archive-proxy.js",
+      "scripts/background/firefox-background.js"
+    ]
+  },
+  "permissions": [
+    "storage",
+    "webRequest",
+    "declarativeNetRequestWithHostAccess",
+    "tabs"
+  ],
+  "host_permissions": [
+    "*://*.bilibili.com/*"
+  ],
+  "optional_host_permissions": [
+    "https://www.biliplus.com/*",
+    "https://www.jijidown.com/*"
+  ],
+  "action": {
+    "default_popup": "settings/popup.html",
+    "default_icon": {
+      "16": "img/icon-16.png",
+      "32": "img/icon-32.png",
+      "48": "img/icon-48.png",
+      "128": "logo.png"
+    }
+  },
+  "options_ui": {
+    "page": "settings/settings.html",
+    "open_in_tab": true
+  }
+}

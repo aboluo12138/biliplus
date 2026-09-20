@@ -355,8 +355,15 @@
       return;
     }
     state.refreshScheduled = true;
-    const schedule = globalScope.requestAnimationFrame || (callback => setTimeout(callback, 0));
-    schedule(refreshDom);
+    if (typeof globalScope.requestAnimationFrame === 'function') {
+      // 必须保留 receiver 再调用：火狐对 requestAnimationFrame 做 WebIDL receiver 校验，
+      // 把方法取出来（const schedule = requestAnimationFrame）再单独调用会抛
+      // "called on an object that does not implement interface Window"，
+      // 而 Chrome 对此较宽松，所以这个问题只在火狐上暴露。
+      globalScope.requestAnimationFrame(refreshDom);
+      return;
+    }
+    setTimeout(refreshDom, 0);
   }
 
   function mutationMayAffectSearch(mutation) {

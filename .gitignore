@@ -1,3 +1,7 @@
 Icon\r
 .DS_Store
 biliplus.zip
+
+# 火狐打包产物（由 node tools/build-firefox.cjs 重新生成）
+dist/
+*.xpi

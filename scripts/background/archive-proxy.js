@@ -5,7 +5,7 @@
  * service worker constructs every URL, omits credentials, rejects redirects,
  * and caps the response body before returning parsed JSON.
  */
-(() => {
+((globalScope) => {
   const MESSAGE_TYPE = 'biliplus-archive-fetch';
   const MAX_BATCH_SIZE = 20;
   const MAX_RESPONSE_BYTES = 1024 * 1024;
@@ -110,19 +110,25 @@
     });
   }
 
+  const api = {
+    MESSAGE_TYPE,
+    MAX_BATCH_SIZE,
+    MAX_RESPONSE_BYTES,
+    normalizeAid,
+    buildArchiveUrl,
+    fetchArchiveJson,
+    installArchiveProxy,
+  };
+
   if (typeof chrome === 'object' && chrome.runtime?.onMessage) {
     installArchiveProxy(chrome.runtime);
   }
 
+  // 与 information-cocoon.js 一致地暴露模块标识：Firefox 事件页后台据此判断
+  // 本模块是否加载成功，从而在失败时回复明确的错误而不是让调用方一直等待。
+  globalScope.BiliPlusArchiveProxy = api;
+
   if (typeof module === 'object' && module.exports) {
-    module.exports = {
-      MESSAGE_TYPE,
-      MAX_BATCH_SIZE,
-      MAX_RESPONSE_BYTES,
-      normalizeAid,
-      buildArchiveUrl,
-      fetchArchiveJson,
-      installArchiveProxy,
-    };
+    module.exports = api;
   }
-})();
+})(typeof globalThis === 'undefined' ? this : globalThis);

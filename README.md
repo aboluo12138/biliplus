@@ -133,6 +133,25 @@ _Below is an example of how you can manual installing from source code._
     ```
 5. More details you can visit [chromebook](https://support.google.com/chromebook/topic/3415446) to install extensions.
 
+#### Firefox users
+
+Firefox's MV3 differs from Chrome's (no background service worker, `chrome.*` does not
+return promises, host permissions are granted per site), so a dedicated manifest and build
+script are provided:
+
+```sh
+# Linux/MacOS
+> make firefox
+
+# Windows
+> make-firefox.bat
+```
+
+Artifacts land in `dist/`. Load `dist/firefox/manifest.json` through
+`about:debugging#/runtime/this-firefox` → "Load Temporary Add-on". Release Firefox only
+installs signed add-ons; see [docs/firefox.md](docs/firefox.md) for permanent installation
+and AMO publishing.
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- ROADMAP -->

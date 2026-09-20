@@ -126,6 +126,23 @@ _以下是如何从源代码手动安装的示例。_
     ```
 5. 关于如何安装扩展，更多详情可以见 [chromebook](https://support.google.com/chromebook/topic/3415446) to install extensions.
 
+#### 火狐（Firefox）用户
+
+火狐的 MV3 与 Chrome 有差异（后台不能用 Service Worker、`chrome.*` 不返回 Promise、
+主机权限按站点授权），因此单独提供了火狐清单与打包脚本：
+
+```sh
+# Linux/MacOS
+> make firefox
+
+# Windows
+> make-firefox.bat
+```
+
+产物在 `dist/`：用 `about:debugging#/runtime/this-firefox` → 「临时载入附加组件」
+选择 `dist/firefox/manifest.json` 即可临时加载。火狐正式版只允许安装已签名扩展，
+永久安装与 AMO 上架的步骤见 [docs/firefox.md](docs/firefox.md)。
+
 <p align="right">(<a href="#readme-top">回到顶部</a>)</p>
 
 <!-- ROADMAP -->

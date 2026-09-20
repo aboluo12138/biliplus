@@ -494,6 +494,9 @@ test('火狐发布工作流保持 ff-v* 触发与关键步骤', () => {
   assert.match(workflow, /gh release upload/);
   assert.match(workflow, /dist\/\*\.xpi/);
   assert.match(workflow, /dist\/\*\.zip/);
+  // 签名产物要上传，且改成可分辨的名字（未签名 vs 已签名）
+  assert.match(workflow, /dist\/signed\/\*/);
+  assert.match(workflow, /biliplus-firefox-\$\{RELEASE_VERSION\}-signed\.xpi/);
 
   // 签名必须有条件：没配 AMO 密钥的仓库不能因此失败
   assert.match(

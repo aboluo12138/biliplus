@@ -71,6 +71,14 @@ git push origin ff-v1.2.0
 （AMO 后台生成），工作流会额外用 `web-ext sign --channel unlisted` 签出一个可永久安装的
 xpi 并一并上传；没配置这两个密钥就跳过签名，只上传未签名包。
 
+Release 里的三个文件这样区分：
+
+| 文件 | 用途 |
+| --- | --- |
+| `biliplus-firefox-<版本>.xpi` | 未签名。临时加载可用；上传 AMO 也可 |
+| `biliplus-firefox-<版本>.zip` | 未签名，同上（AMO 上传用 zip 更规范） |
+| `biliplus-firefox-<版本>-signed.xpi` | **已签名**，可直接永久安装（配了 AMO 密钥才有） |
+
 > 注意：fork 里默认不启用 Actions。如果你在 fork 里打开了 Actions，
 > 上游自带的 `release.yml` 会在 push 到 main 时运行（建 Release PR / 发 Chrome 应用商店），
 > 那需要上游的密钥，通常只会失败报错——不想看到的话就别启用它。

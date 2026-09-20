@@ -68,13 +68,22 @@ jobs:
 
       - name: Sign for AMO (only when AMO secrets are configured)
         if: ${{ env.AMO_JWT_ISSUER != '' && env.AMO_JWT_SECRET != '' }}
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
         run: |
+          set -euo pipefail
+
           npx --yes web-ext@latest sign \
             --source-dir dist/firefox \
             --channel unlisted \
             --api-key "$AMO_JWT_ISSUER" \
             --api-secret "$AMO_JWT_SECRET" \
             --artifacts-dir dist/signed
+
+          # web-ext 的产物文件名不可控，这里统一改名，好在 Release 里一眼分辨：
+          # 未签名的 xpi 供临时加载/上传 AMO，签名的那份可直接永久安装。
+          mv dist/signed/*.xpi \
+             "dist/signed/biliplus-firefox-${RELEASE_VERSION}-signed.xpi"
 
       - name: Publish the release assets
         env:

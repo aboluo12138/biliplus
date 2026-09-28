@@ -103,6 +103,31 @@ const FIREFOX_PERMISSIONS = new Set([
 
 const MATCH_PATTERN = /^(\*|https?|file|ftp|moz-extension):\/\/(\*|\*\.[^/*]+|[^/*]+)\/.*$/;
 
+/**
+ * browser_specific_settings.gecko.data_collection_permissions 的合法取值。
+ * 取自火狐自带 schema（chrome/toolkit/content/extensions/schemas/manifest.json
+ * 里的 DataCollectionPermission / OptionalDataCollectionPermission 定义）。
+ */
+const DATA_COLLECTION_PERMISSIONS = new Set([
+  'none',
+  'authenticationInfo',
+  'bookmarksInfo',
+  'browsingActivity',
+  'financialAndPaymentInfo',
+  'healthInfo',
+  'locationInfo',
+  'personalCommunications',
+  'personallyIdentifyingInfo',
+  'searchTerms',
+  'websiteActivity',
+  'websiteContent',
+]);
+
+/** optional 比 required 多一个 technicalAndInteraction，且没有 none。 */
+const OPTIONAL_DATA_COLLECTION_PERMISSIONS = new Set(
+  [...DATA_COLLECTION_PERMISSIONS].filter(value => value !== 'none').concat('technicalAndInteraction')
+);
+
 function parseMatchPattern(pattern) {
   const match = /^(\*|https?|file|ftp|moz-extension):\/\/(\*|\*\.[^/*]+|[^/*]+)(\/.*)$/.exec(
     pattern
@@ -244,6 +269,38 @@ function validateFirefoxManifest(options = {}) {
   }
   if (typeof gecko?.strict_min_version !== 'string') {
     errors.push('缺少 browser_specific_settings.gecko.strict_min_version');
+  }
+
+  // AMO 强制要求声明数据收集用途，缺了会被直接拒收。
+  const dataCollection = gecko?.data_collection_permissions;
+  if (
+    !dataCollection ||
+    !Array.isArray(dataCollection.required) ||
+    dataCollection.required.length === 0
+  ) {
+    errors.push(
+      '缺少 browser_specific_settings.gecko.data_collection_permissions.required（AMO 强制要求）'
+    );
+  } else {
+    for (const value of dataCollection.required) {
+      if (!DATA_COLLECTION_PERMISSIONS.has(value)) {
+        errors.push(`data_collection_permissions.required 含未知取值："${value}"`);
+      }
+    }
+    // 语义上 "none" 表示不收集任何数据，与具体类别并列没有意义。
+    // 火狐本身只警告并忽略 "none"（见 Schemas.sys.mjs 的
+    // checkValidRequiredDataCollection），这里保持一致，用警告而非报错。
+    if (dataCollection.required.includes('none') && dataCollection.required.length > 1) {
+      warnings.push(
+        'data_collection_permissions.required 同时含 "none" 与其它类别：' +
+          '火狐会忽略 "none"，建议只保留其一'
+      );
+    }
+    for (const value of dataCollection.optional || []) {
+      if (!OPTIONAL_DATA_COLLECTION_PERMISSIONS.has(value)) {
+        errors.push(`data_collection_permissions.optional 含未知取值："${value}"`);
+      }
+    }
   }
 
   // --- 后台：事件页而不是 Service Worker ---------------------------------
@@ -614,6 +671,8 @@ module.exports = {
   PACKAGE_EXCLUDES,
   COMPAT_SCRIPT,
   FIREFOX_PERMISSIONS,
+  DATA_COLLECTION_PERMISSIONS,
+  OPTIONAL_DATA_COLLECTION_PERMISSIONS,
   isPackaged,
   parseMatchPattern,
   matchPatternSubsumes,

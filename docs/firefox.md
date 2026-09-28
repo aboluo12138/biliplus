@@ -48,8 +48,51 @@ npx web-ext sign --source-dir dist/firefox --channel unlisted \
   `browser_specific_settings.gecko.id` 改成该列表正在使用的 ID，否则会被当成另一个扩展。
   当前填的是占位值 `biliplus@0xlau.dev`。
 
-> 提交 AMO 时可能还需要按 AMO 的最新要求声明数据收集用途（`data_collection_permissions`）。
-> 这一点和 Chrome 上架流程类似，按 AMO 后台提示填写即可。
+### AMO 的数据收集声明（强制）
+
+AMO 现在**强制要求**新扩展在清单里声明数据收集用途，缺了会被直接拒收：
+
+```
+The "data_collection_permissions" property is missing.
+```
+
+本扩展的声明（`manifest.firefox.json` → `browser_specific_settings.gecko`）：
+
+```json
+"data_collection_permissions": { "required": ["none"] }
+```
+
+**为什么是 `none`**：扩展不向开发者或任何分析服务发送数据，全部处理都在本地完成：
+
+- 读取/修改 B 站页面内容、用当前登录态调用 B 站接口（就是用户正在访问的那个站点）；
+- 设置存在浏览器本地（`storage.sync`）；
+- 只有开启「失效视频信息」时，才会向公开归档站 `biliplus.com` / `jijidown.com`
+  发一次查询，内容仅是一个数字视频 ID（aid），不带账号信息。
+
+`required` 的合法取值来自火狐自带 schema（`DataCollectionPermission`）：
+`none` 或 `authenticationInfo`、`bookmarksInfo`、`browsingActivity`、
+`financialAndPaymentInfo`、`healthInfo`、`locationInfo`、`personalCommunications`、
+`personallyIdentifyingInfo`、`searchTerms`、`websiteActivity`、`websiteContent`。
+若 AMO 审核认为上面第三条属于"向第三方传输数据"，把 `none` 换成 `websiteActivity`
+即可——`tools/firefox-package.cjs` 会校验取值合法性，写错会在打包时报错。
+
+### AMO 静态校验的 5 条警告（不阻塞）
+
+AMO 的 linter 还会报 5 条 `Unsafe assignment to innerHTML/outerHTML`。
+它们**不影响提交**，逐条评估如下：
+
+| 位置 | 实际情况 |
+| --- | --- |
+| `scripts/stepless-video-rate.js:558` | 静态 UI 模板，无插值 → 误报 |
+| `scripts/ai-conclusion.js:189` | `aiIcon` 是固定的内联 SVG 字符串 → 误报 |
+| `scripts/invalid-video-info.js:666` | 插值已用 `escapeHtml()` 转义 → 基本无风险 |
+| `scripts/cover-viewer.js:102` | 把接口返回的 `bvid` / 在线人数拼进 HTML → **真实但低危** |
+| `scripts/ai-conclusion.js:309` | 把 B 站 AI 总结文本拼进 HTML → **真实但低危** |
+
+后两条的数据都来自 B 站自己的接口，且扩展运行在页面里（同源脚本本就能改 DOM），
+所以风险有限。真要消掉警告，就是把这两处改成 `createElement`/`textContent`
+或对插值转义——代价是又多改两个上游文件，将来 merge 冲突面变大。
+**建议先按现状提交**，等 AMO 审核提出要求再改。
 
 ### 用 GitHub Actions 自动打包（可选）
 

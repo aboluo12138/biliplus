@@ -10,6 +10,7 @@ const {
   CHROME_MANIFEST,
   COMPAT_SCRIPT,
   FIREFOX_MANIFEST,
+  DATA_COLLECTION_PERMISSIONS,
   validateFirefoxManifest,
   createZip,
   buildFirefoxPackage,
@@ -247,6 +248,19 @@ test('火狐清单通过全部结构与对等校验', () => {
   // 版本号以 manifest.json 为准、打包时自动同步，所以「版本不一致」只是提示。
   const unexpected = warnings.filter(warning => !warning.includes('打包时会自动同步'));
   assert.deepEqual(unexpected, []);
+});
+
+test('火狐清单声明了 AMO 强制要求的数据收集用途', () => {
+  const gecko = firefoxManifest.browser_specific_settings.gecko;
+  // AMO 对新扩展强制要求该字段，缺失会被直接拒收
+  assert.deepEqual(gecko.data_collection_permissions, { required: ['none'] });
+  for (const value of gecko.data_collection_permissions.required) {
+    assert.equal(
+      DATA_COLLECTION_PERMISSIONS.has(value),
+      true,
+      `data_collection_permissions 含未知取值：${value}`
+    );
+  }
 });
 
 test('打包时版本号从 manifest.json 同步（上游升版本无需手改火狐清单）', () => {
@@ -636,6 +650,10 @@ test('打包产物包含清单引用的全部文件且清单在根部', () => {
       firefoxManifest.browser_specific_settings.gecko.id
     );
     assert.deepEqual(packagedManifest.background.scripts, firefoxManifest.background.scripts);
+    // AMO 强制的数据收集声明必须原样带进包里
+    assert.deepEqual(packagedManifest.browser_specific_settings.gecko.data_collection_permissions, {
+      required: ['none'],
+    });
     // 版本号必须跟着 manifest.json 走，而不是火狐清单里那份。
     assert.equal(packagedManifest.version, chromeManifest.version);
     assert.equal(fs.existsSync(path.join(result.unpackedDir, FIREFOX_MANIFEST)), false);

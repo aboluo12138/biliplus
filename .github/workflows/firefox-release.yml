@@ -26,12 +26,14 @@ jobs:
       AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
     steps:
       - name: Check out the source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          # Node 20 已被 GitHub 标记为弃用（action 自带的 Node 20 运行时也被强制
+          # 提升到 24），这里用当前 LTS。
+          node-version: '22'
 
       - name: Resolve and validate the release tag
         id: release

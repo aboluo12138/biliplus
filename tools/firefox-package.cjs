@@ -269,6 +269,32 @@ function validateFirefoxManifest(options = {}) {
   }
   if (typeof gecko?.strict_min_version !== 'string') {
     errors.push('缺少 browser_specific_settings.gecko.strict_min_version');
+  } else {
+    // data_collection_permissions 是 Firefox 140 才支持的键；strict_min_version
+    // 低于它时 AMO 会报 "Manifest key not supported by the specified minimum
+    // Firefox version"。Android 侧要求 142。
+    const desktopMin = Number.parseFloat(gecko.strict_min_version);
+    if (Number.isFinite(desktopMin) && desktopMin < 140) {
+      errors.push(
+        `strict_min_version 应 >= 140.0（data_collection_permissions 需要 Firefox 140+），` +
+          `当前为 ${gecko.strict_min_version}`
+      );
+    }
+  }
+
+  const geckoAndroid = manifest.browser_specific_settings?.gecko_android;
+  if (!geckoAndroid) {
+    warnings.push(
+      '未声明 browser_specific_settings.gecko_android，AMO 会按桌面版最低版本要求 Android（142+）并给出提示'
+    );
+  } else {
+    const androidMin = Number.parseFloat(geckoAndroid.strict_min_version);
+    if (!Number.isFinite(androidMin) || androidMin < 142) {
+      errors.push(
+        `gecko_android.strict_min_version 应 >= 142.0（data_collection_permissions 的 Android 要求），` +
+          `当前为 ${geckoAndroid.strict_min_version}`
+      );
+    }
   }
 
   // AMO 强制要求声明数据收集用途，缺了会被直接拒收。

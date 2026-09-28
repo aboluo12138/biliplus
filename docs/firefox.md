@@ -44,9 +44,17 @@ npx web-ext sign --source-dir dist/firefox --channel unlisted \
 [AMO 开发者中心](https://addons.mozilla.org/developers/)：
 
 - 如果这是**新扩展**：新建附加组件，上传 zip。
-- 如果要**更新已有的 AMO 列表**：必须把 `manifest.firefox.json` 里的
-  `browser_specific_settings.gecko.id` 改成该列表正在使用的 ID，否则会被当成另一个扩展。
-  当前填的是占位值 `biliplus@0xlau.dev`。
+- 当前清单里的 ID 是 `biliplus-firefox@aboluo12138.github.io`（属于本 fork 自己）。
+
+**关于扩展 ID**（踩过坑，重要）：
+
+- 早先用的占位值 `biliplus@0xlau.dev` 在 AMO 上传时被拒：
+  `发现重复的附加组件 ID`——该 ID 已被占用（很可能就是上游那个 AMO 列表）。
+  **ID 全局唯一且一经发布就固定**，所以本 fork 用自己的 ID。
+- 这也意味着**无法更新上游的 AMO 列表**（那个列表属于原作者账号）；
+  本 fork 发布的是**独立的附加组件**，两者可共存，用户装哪个都能用。
+- 想换成别的 ID，改 `manifest.firefox.json` 里的 `gecko.id` 后重新打包即可；
+  但如果已经发布过，改 ID 等于新建一个附加组件，用户需要重新安装。
 
 ### AMO 的数据收集声明（强制）
 
@@ -441,7 +449,10 @@ node tests/firefox-port.test.js
   想让它可用需要额外声明 `declarativeNetRequestFeedback` 可选权限，功能上并不需要。
 - **功能默认全部关闭**：总开关与每个具体功能默认 `false`（`settings/js/settings.js`
   里 `storage[key] ?? SETTINGS_DEFAULTS[key] ?? false`），装好后需自行开启。
-- **最低火狐版本**：`strict_min_version` 为 `128.0`
-  （`declarativeNetRequestWithHostAccess` 与 origin controls 需要较新版本）。
+- **最低火狐版本**：桌面版 `strict_min_version` 为 `140.0`，Android 版
+  (`gecko_android`) 为 `142.0`。功能本身只需要 128（`declarativeNetRequestWithHostAccess`
+  与 origin controls），但 AMO 强制的 `data_collection_permissions` 是 140 才支持的清单键，
+  低于它 AMO 会报 "Manifest key not supported by the specified minimum Firefox version"。
+  Firefox 140 是当前的 ESR 线，所以这个下限是合理的。
 - 验证覆盖的是火狐 156；更老的火狐版本未实测。
 

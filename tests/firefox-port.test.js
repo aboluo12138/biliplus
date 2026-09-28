@@ -110,7 +110,7 @@ function createFirefoxEnv() {
       onChanged: { addListener() {} },
     },
     runtime: {
-      id: 'biliplus@0xlau.dev',
+      id: 'biliplus-firefox@aboluo12138.github.io',
       lastError: undefined,
       sendMessage: mode('runtime.sendMessage', impl.sendMessage),
       getManifest: impl.getManifest,
@@ -251,7 +251,8 @@ test('火狐清单通过全部结构与对等校验', () => {
 });
 
 test('火狐清单声明了 AMO 强制要求的数据收集用途', () => {
-  const gecko = firefoxManifest.browser_specific_settings.gecko;
+  const settings = firefoxManifest.browser_specific_settings;
+  const gecko = settings.gecko;
   // AMO 对新扩展强制要求该字段，缺失会被直接拒收
   assert.deepEqual(gecko.data_collection_permissions, { required: ['none'] });
   for (const value of gecko.data_collection_permissions.required) {
@@ -261,6 +262,22 @@ test('火狐清单声明了 AMO 强制要求的数据收集用途', () => {
       `data_collection_permissions 含未知取值：${value}`
     );
   }
+
+  // 这个 ID 在 AMO 上已被占用（上传时报"重复的附加组件 ID"），
+  // 必须换成自己独有的，否则整个上传流程走不下去。
+  assert.notEqual(gecko.id, 'biliplus@0xlau.dev');
+  assert.match(gecko.id, /@/);
+
+  // data_collection_permissions 是 Firefox 140 才支持的键，Android 侧要求 142；
+  // 最低版本低于它时 AMO 会报 "Manifest key not supported ..."。
+  assert.ok(
+    Number.parseFloat(gecko.strict_min_version) >= 140,
+    `strict_min_version 应 >= 140.0，当前 ${gecko.strict_min_version}`
+  );
+  assert.ok(
+    Number.parseFloat(settings.gecko_android?.strict_min_version) >= 142,
+    'gecko_android.strict_min_version 应 >= 142.0'
+  );
 });
 
 test('打包时版本号从 manifest.json 同步（上游升版本无需手改火狐清单）', () => {
